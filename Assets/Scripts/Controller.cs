@@ -140,7 +140,7 @@ public class Controller : MonoBehaviour {
 
     List<GameObject> checkGridSpace(int x, int y, int value, List<GameObject> matches)
     {
-        if (x < columns - 1 && y < rows - 1 && x > 0 && y > 0)
+        if (x < columns && y < rows && x >= 0 && y >= 0)
         {
             if (gridVal(x, y) == value && !gridChecked(x, y))
             {
