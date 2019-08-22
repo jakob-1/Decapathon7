@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Controller : MonoBehaviour {
 
@@ -22,7 +23,8 @@ public class Controller : MonoBehaviour {
     public int rows = 9;
     public int columns = 6;
 
-    public List<GameObject> toCheck;
+    public int score = 0;
+    public Text scoreText;
 
     public bool gameOver = false;
 
@@ -117,7 +119,15 @@ public class Controller : MonoBehaviour {
             scorePlayer(matches.Count);
             DestroyMatchedPieces(matches);
             GridUncheckAll();
-            moveRemainingPiecesDown();
+            List<GameObject> toCheck = moveRemainingPiecesDown();
+            if (toCheck.Count > 0)
+            {
+                foreach (GameObject pieceObj in toCheck)
+                {
+                    Piece piece = pieceObj.GetComponent<Piece>();
+                    checkForMatches(piece.x, piece.y);
+                }
+            }
         }
         GridUncheckAll();
     }
@@ -154,7 +164,18 @@ public class Controller : MonoBehaviour {
 
     void scorePlayer(int matches)
     {
+        score += 50;
+        matches -= 3;
+        score += matches * 100;
+        string scoreStr = score.ToString();
+        int scoreLen = scoreStr.Length;
+        print(scoreText.text.Length);
+        for (int i = 0; i < scoreText.text.Length - scoreLen; i++)
+        {
+            scoreStr = "0" + scoreStr;
+        }
 
+        scoreText.text = scoreStr;
     }
 
     void DestroyMatchedPieces(List<GameObject> matches)
@@ -184,19 +205,21 @@ public class Controller : MonoBehaviour {
     }
 
     //move remaining pieces after a match down until they are all as low as possible
-    void moveRemainingPiecesDown()
+    List<GameObject> moveRemainingPiecesDown()
     {
+        List<GameObject> toCheck = new List<GameObject>();
         for (int x = 0; x < columns; x++)
         {
             for (int y = rows - 2; y >= 0; y--)
             {
-                print(x + ", " + y);
                 if (grid[x,y+1] == null && grid[x,y] != null)
                 {
+                    toCheck.Add(grid[x, y]);
                     PieceFall(x, y);
                 }
             }
         }
+        return toCheck;
     }
 
     //the piece will fall until it hits the ground or the piece below it
@@ -231,6 +254,10 @@ public class Controller : MonoBehaviour {
         }
         else
         {
+            if (Input.GetKeyUp(KeyCode.UpArrow))
+            {
+                currentPiece.transform.Rotate(new Vector3(0, 0, 45));
+            }
             if (Input.GetKey(KeyCode.RightArrow) 
                 && piecePos.x != columns - 1 
                 && grid[(int)piecePos.x + 1, (int)piecePos.y] == null)
