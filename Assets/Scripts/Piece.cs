@@ -7,6 +7,15 @@ public class Piece : MonoBehaviour {
 
     public int value = 1;
     public bool beenChecked = false;
+    public int x;
+    public int y;
+
+
+    public void assignXY(int X, int Y)
+    {
+        x = X;
+        y = Y;
+    }
 
 	// Use this for initialization
 	void Start () {

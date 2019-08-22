@@ -22,6 +22,8 @@ public class Controller : MonoBehaviour {
     public int rows = 9;
     public int columns = 6;
 
+    public List<GameObject> toCheck;
+
     public bool gameOver = false;
 
     private Debug debug;
@@ -32,7 +34,6 @@ public class Controller : MonoBehaviour {
         GenerateNextPiece();
         SpawnNextPiece();
         moveDownTimer = Time.time + normalMovDowneRate;
-        print(grid.Length);
         debug = GetComponent<Debug>();
     }
 	
@@ -67,6 +68,8 @@ public class Controller : MonoBehaviour {
         int x = (int)piecePos.x;
         int y = (int)piecePos.y;
 
+
+        currentPiece.GetComponent<Piece>().assignXY(x, y);
         grid[x, y] = currentPiece;
 
         checkForMatches(x,y);
@@ -109,7 +112,6 @@ public class Controller : MonoBehaviour {
         List<GameObject> matches = new List<GameObject>();
         matches = getMatch(startX, startY, value, matches);
         //debug.printGridCheck();
-        print(matches.Count);
         if (matches.Count >= 3)
         {
             scorePlayer(matches.Count);
@@ -159,6 +161,7 @@ public class Controller : MonoBehaviour {
     {
         foreach (GameObject match in matches)
         {
+            grid[match.GetComponent<Piece>().x, match.GetComponent<Piece>().y] = null;
             Destroy(match);
         }
     }
@@ -185,8 +188,9 @@ public class Controller : MonoBehaviour {
     {
         for (int x = 0; x < columns; x++)
         {
-            for (int y = 0; y < rows; y++)
+            for (int y = rows - 2; y >= 0; y--)
             {
+                print(x + ", " + y);
                 if (grid[x,y+1] == null && grid[x,y] != null)
                 {
                     PieceFall(x, y);
@@ -200,14 +204,22 @@ public class Controller : MonoBehaviour {
     {
         int distance = 1;
 
-        while (grid[x, y + distance + 1] == null && y + distance + 1 != rows)
-        {
-            distance++;
+        while (y + distance + 1 < rows){
+            if (grid[x, y + distance + 1] == null)
+            {
+                distance++;
+            }
+            else
+            {
+                break;
+            }
         }
 
         grid[x, y + distance] = grid[x, y];
-
+        grid[x, y].transform.position += -distance * transform.up;
+        grid[x, y].GetComponent<Piece>().assignXY(x, y + distance);
         grid[x, y] = null;
+
     }
 
     //move the active piece down one step if there are no obstructions in the way;
