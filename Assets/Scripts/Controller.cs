@@ -27,6 +27,13 @@ public class Controller : MonoBehaviour {
     public Text scoreText;
 
     public bool gameOver = false;
+    private GameObject gameOverScreen;
+    private Text gameOverScore;
+
+    private PauseMenu pauseMenu;
+    private bool matchAnimating = false;
+    private float matchPauseTimer;
+    public float matchPauseLength;
 
     private Debug debug;
 
@@ -37,15 +44,28 @@ public class Controller : MonoBehaviour {
         SpawnNextPiece();
         moveDownTimer = Time.time + normalMovDowneRate;
         debug = GetComponent<Debug>();
-    }
+        pauseMenu = GameObject.FindGameObjectWithTag("GameManager").GetComponent<PauseMenu>();
+        gameOverScreen = GameObject.FindGameObjectWithTag("GameOverMenu");
+        gameOverScore = GameObject.FindGameObjectWithTag("GameOverScore").GetComponent<Text>();
+        gameOverScreen.SetActive(false);
+        }
 	
 	// Update is called once per frame
 	void Update () {
-        if (!gameOver)
+        if (!gameOver && !pauseMenu.paused && !matchAnimating)
         {
             movePiece();
         }
+        if (matchAnimating)
+        {
+            matchesFound();
+        }
 	}
+
+    void matchesFound()
+    {
+        matchAnimating = false;
+    }
 
     //randomly pic the next piece and display it in the next piece box
     void GenerateNextPiece()
@@ -70,7 +90,15 @@ public class Controller : MonoBehaviour {
         int x = (int)piecePos.x;
         int y = (int)piecePos.y;
 
-
+        if (y == 0)
+        {
+            gameOver = true;
+            pauseMenu.enabled = false;
+            scoreText.enabled = false;
+            gameOverScreen.SetActive(true);
+            gameOverScore.text ="SCORE\n" + score.ToString();
+            Cursor.lockState = CursorLockMode.None;
+        }
         currentPiece.GetComponent<Piece>().assignXY(x, y);
         grid[x, y] = currentPiece;
 
@@ -128,6 +156,7 @@ public class Controller : MonoBehaviour {
                     checkForMatches(piece.x, piece.y);
                 }
             }
+            matchAnimating = true;
         }
         GridUncheckAll();
     }
@@ -245,10 +274,23 @@ public class Controller : MonoBehaviour {
 
     }
 
+    bool nextPieceDownEmpty(int x, int y)
+    {
+        if (y + 1 < rows)
+        {
+            if (grid[x, y + 1] == null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     //move the active piece down one step if there are no obstructions in the way;
     void movePiece()
     {
-        if (piecePos.y == rows - 1 || grid[(int)piecePos.x, (int)piecePos.y + 1] != null)
+        if ((!nextPieceDownEmpty((int)piecePos.x, (int)piecePos.y)) && moveDownTimer < Time.time)
         {
             placePiece(piecePos);
         }
@@ -287,7 +329,9 @@ public class Controller : MonoBehaviour {
 
             if (Input.GetKey(KeyCode.DownArrow))
             {
-                if (Input.GetKeyDown(KeyCode.DownArrow) || moveDownTimer < Time.time)
+                if ((Input.GetKeyDown(KeyCode.DownArrow) 
+                    || moveDownTimer < Time.time) 
+                    && nextPieceDownEmpty((int)piecePos.x, (int)piecePos.y))
                 {
                     piecePos += new Vector2(0, 1);
                     currentPiece.transform.position += -distance * transform.up;
