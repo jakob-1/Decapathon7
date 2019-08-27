@@ -31,9 +31,13 @@ public class Controller : MonoBehaviour {
     private Text gameOverScore;
 
     private PauseMenu pauseMenu;
+
+    private List<GameObject> LastMatches;
     private bool matchAnimating = false;
-    private float matchPauseTimer;
-    public float matchPauseLength;
+    private bool animationDone = false;
+    private int animationPhase = 0;
+    private float animationTimer;
+    public float animationLength = 0.1f;
 
     private Debug debug;
 
@@ -48,6 +52,7 @@ public class Controller : MonoBehaviour {
         gameOverScreen = GameObject.FindGameObjectWithTag("GameOverMenu");
         gameOverScore = GameObject.FindGameObjectWithTag("GameOverScore").GetComponent<Text>();
         gameOverScreen.SetActive(false);
+        LastMatches = new List<GameObject>();
         }
 	
 	// Update is called once per frame
@@ -64,7 +69,53 @@ public class Controller : MonoBehaviour {
 
     void matchesFound()
     {
-        matchAnimating = false;
+        if (animationDone)
+        {
+            DestroyMatchedPieces(LastMatches);
+            GridUncheckAll();
+            List<GameObject> toCheck = moveRemainingPiecesDown();
+            animationDone = false;
+            matchAnimating = false;
+            if (toCheck.Count > 0)
+            {
+                foreach (GameObject pieceObj in toCheck)
+                {
+                    animationDone = false;
+                    Piece piece = pieceObj.GetComponent<Piece>();
+                    checkForMatches(piece.x, piece.y);
+                }
+            }
+            
+        }
+        else
+        {
+            if (animationPhase == 0)
+            {
+                animationPhase = 1;
+                foreach (GameObject piece in LastMatches)
+                {
+                    piece.transform.localScale = new Vector3(1.3f, 1.3f);
+                    piece.transform.eulerAngles = new Vector3(0, 0, 15);
+                }
+                animationTimer = animationLength + Time.time;
+            }
+            else if (animationPhase == 1 && animationTimer < Time.time)
+            {
+                animationPhase = 2;
+                foreach (GameObject piece in LastMatches)
+                {
+                    piece.transform.localScale = new Vector3(1.0f, 1.0f);
+                    piece.transform.eulerAngles = Vector3.zero;
+                }
+                animationTimer = animationLength + Time.time;
+            }
+            else if (animationPhase == 2 && animationTimer < Time.time)
+            {
+                animationPhase = 0;
+                animationDone = true;
+            }
+        }
+        
     }
 
     //randomly pic the next piece and display it in the next piece box
@@ -145,18 +196,10 @@ public class Controller : MonoBehaviour {
         if (matches.Count >= 3)
         {
             scorePlayer(matches.Count);
-            DestroyMatchedPieces(matches);
-            GridUncheckAll();
-            List<GameObject> toCheck = moveRemainingPiecesDown();
-            if (toCheck.Count > 0)
-            {
-                foreach (GameObject pieceObj in toCheck)
-                {
-                    Piece piece = pieceObj.GetComponent<Piece>();
-                    checkForMatches(piece.x, piece.y);
-                }
-            }
+            LastMatches = matches;
             matchAnimating = true;
+
+
         }
         GridUncheckAll();
     }
@@ -198,7 +241,6 @@ public class Controller : MonoBehaviour {
         score += matches * 100;
         string scoreStr = score.ToString();
         int scoreLen = scoreStr.Length;
-        print(scoreText.text.Length);
         for (int i = 0; i < scoreText.text.Length - scoreLen; i++)
         {
             scoreStr = "0" + scoreStr;
