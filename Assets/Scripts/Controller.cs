@@ -41,9 +41,13 @@ public class Controller : MonoBehaviour {
 
     private Debug debug;
 
+    private LevelMaker levelMaker;
+
     // Use this for initialization
     void Start () {
+        levelMaker = GameObject.FindGameObjectWithTag("GameManager").GetComponent<LevelMaker>();
         grid = new GameObject[columns,rows];
+        grid = levelMaker.generatePieces(7 ,grid, columns, rows);
         GenerateNextPiece();
         SpawnNextPiece();
         moveDownTimer = Time.time + normalMovDowneRate;
