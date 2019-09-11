@@ -69,6 +69,10 @@ public class Controller : MonoBehaviour {
         {
             matchesFound();
         }
+        if (levelMaker.isGridClear(grid, columns, rows))
+        {
+            levelMaker.generatePieces(7, grid, columns, rows);
+        }
 	}
 
     void matchesFound()
